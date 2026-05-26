@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GENER8R</title>
+
+  <!-- bebas neue for the big brutalist headings, inter for body text -->
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0a0a;
+      --bg1:      #111111;
+      --bg2:      #181818;
+      --bg3:      #222222;
+      --border:   #2a2a2a;
+      --border-b: #333333;
+      --pink:     #ff2d78;
+      --pink-dim: rgba(255,45,120,0.15);
+      --pink-glow:rgba(255,45,120,0.25);
+      --white:    #f0f0f0;
+      --text:     #b0b0b0;
+      --dim:      #555555;
+      --muted:    #333333;
+      --user-bg:  #1a1a1a;
+      --ai-bg:    #141414;
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shell {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 58px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    /* big brutalist logo */
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 0.18em;
+      color: var(--white);
+      line-height: 1;
+    }
+    .logo em {
+      color: var(--pink);
+      font-style: normal;
+      /* subtle glow on the 8 */
+      text-shadow: 0 0 20px var(--pink-glow);
+    }
+
+    .hdr-r {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* wave animation shown when speaking */
+    .wave { display: none; align-items: flex-end; gap: 2px; height: 14px; }
+    .wave.on { display: flex; }
+    .wave span {
+      display: block; width: 2px; border-radius: 1px;
+      background: var(--pink); animation: wv .7s ease-in-out infinite;
+    }
+    .wave span:nth-child(1){animation-delay:0s;height:4px}
+    .wave span:nth-child(2){animation-delay:.1s;height:12px}
+    .wave span:nth-child(3){animation-delay:.2s;height:8px}
+    .wave span:nth-child(4){animation-delay:.15s;height:14px}
+    .wave span:nth-child(5){animation-delay:.05s;height:6px}
+    @keyframes wv { 0%,100%{transform:scaleY(.3)} 50%{transform:scaleY(1)} }
+
+    #hdr-clock {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+    }
+
+    .model-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+    }
+
+    /* ── BODY ── */
+    .body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sb {
+      width: 210px; flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      background: var(--bg1);
+      display: flex; flex-direction: column;
+      padding: 20px 0; gap: 28px;
+      overflow-y: auto; overflow-x: hidden;
+    }
+    .sb::-webkit-scrollbar { width: 0; }
+
+    .sb-sec { padding: 0 16px; }
+
+    /* brutalist section label — all caps, tight, pink underline */
+    .sb-lbl {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
+      color: var(--pink);
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--pink);
+    }
+
+    /* status indicator */
+    .st-block {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .st-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--dim); flex-shrink: 0;
+      transition: background .3s, box-shadow .3s;
+    }
+    .st-dot.listening { background: var(--pink); box-shadow: 0 0 8px var(--pink); animation: blink 1s infinite; }
+    .st-dot.thinking  { background: #ffcc00; box-shadow: 0 0 8px #ffcc00; animation: blink .5s infinite; }
+    .st-dot.speaking  { background: #00e676; box-shadow: 0 0 8px #00e676; animation: blink .35s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .st-txt {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      transition: color .3s;
+    }
+    .st-txt.listening { color: var(--pink); }
+    .st-txt.thinking  { color: #ffcc00; }
+    .st-txt.speaking  { color: #00e676; }
+
+    /* battery */
+    .bat { display: flex; flex-direction: column; gap: 8px; }
+    .bat-row { display: flex; justify-content: space-between; align-items: center; }
+    .bat-lbl { font-size: 0.72rem; color: var(--dim); }
+    .bat-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; color: var(--white);
+    }
+    .bat-track {
+      height: 2px; background: var(--bg3); border-radius: 1px; overflow: hidden;
+    }
+    .bat-fill {
+      height: 100%; background: var(--pink);
+      transition: width 1s;
+    }
+    .bat-fill.warn { background: #ffcc00; }
+    .bat-fill.low  { background: #ff4444; }
+
+    /* command reference */
+    .cmd-list { display: flex; flex-direction: column; gap: 1px; }
+    .cmd {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--dim);
+      padding: 5px 8px;
+      border-radius: 3px;
+      border-left: 2px solid transparent;
+      transition: all .12s;
+      line-height: 1.4;
+    }
+    .cmd:hover {
+      color: var(--pink);
+      border-left-color: var(--pink);
+      background: var(--pink-dim);
+    }
+
+    /* ── CHAT ── */
+    .chat-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .chat-log {
+      flex: 1; overflow-y: auto;
+      padding: 32px 36px;
+      display: flex; flex-direction: column; gap: 20px;
+      scroll-behavior: smooth;
+    }
+    .chat-log::-webkit-scrollbar { width: 3px; }
+    .chat-log::-webkit-scrollbar-thumb { background: var(--border-b); border-radius: 2px; }
+
+    /* welcome screen */
+    .welcome {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      flex: 1; gap: 12px; text-align: center;
+      padding: 40px; min-height: 300px;
+    }
+    /* massive brutalist title */
+    .welcome-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 6rem;
+      letter-spacing: 0.2em;
+      line-height: 1;
+      color: var(--white);
+    }
+    .welcome-logo em {
+      color: var(--pink);
+      font-style: normal;
+      text-shadow: 0 0 40px var(--pink-glow);
+    }
+    .welcome-line {
+      width: 48px; height: 2px;
+      background: var(--pink);
+      margin: 4px 0;
+    }
+    .welcome-sub {
+      font-size: 0.72rem;
+      color: var(--dim);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .welcome-hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* message bubbles */
+    .msg {
+      display: flex; flex-direction: column; gap: 4px;
+      max-width: 68%;
+      animation: msgIn .2s ease;
+    }
+    @keyframes msgIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+    .msg.user      { align-self: flex-end; align-items: flex-end; }
+    .msg.assistant { align-self: flex-start; align-items: flex-start; }
+    .msg.system    { align-self: center; align-items: center; max-width: 86%; }
+
+    .msg-who {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+    .msg.user .msg-who      { color: var(--pink); }
+    .msg.assistant .msg-who { color: var(--dim); }
+    .msg.system .msg-who    { color: var(--muted); }
+
+    .bubble {
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      font-weight: 400;
+      border-radius: 4px;
+    }
+
+    /* user bubble — pink tint */
+    .msg.user .bubble {
+      background: var(--pink-dim);
+      border: 1px solid rgba(255,45,120,0.3);
+      border-radius: 4px 4px 0 4px;
+      color: var(--white);
+    }
+
+    /* AI bubble — dark with a left pink border */
+    .msg.assistant .bubble {
+      background: var(--ai-bg);
+      border: 1px solid var(--border-b);
+      border-left: 2px solid var(--pink);
+      border-radius: 0 4px 4px 4px;
+      color: var(--text);
+    }
+
+    .msg.system .bubble {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--dim);
+    }
+
+    /* ── FOOTER ── */
+    .ftr {
+      padding: 16px 28px;
+      border-top: 1px solid var(--border);
+      background: var(--bg1);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-shrink: 0;
+    }
+
+    .mic-area { display: flex; align-items: center; gap: 16px; flex: 1; }
+
+    /* brutalist square mic button instead of circle */
+    .mic-btn {
+      width: 52px; height: 52px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-b);
+      background: var(--bg2);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s; flex-shrink: 0; outline: none;
+    }
+    .mic-btn:hover {
+      border-color: var(--pink);
+      background: var(--pink-dim);
+    }
+    .mic-btn.active {
+      border-color: var(--pink);
+      background: var(--pink-dim);
+      animation: mpulse 1.2s infinite;
+    }
+    .mic-btn.active svg { stroke: var(--pink); }
+    @keyframes mpulse {
+      0%   { box-shadow: 0 0 0 0 var(--pink-glow); }
+      70%  { box-shadow: 0 0 0 12px rgba(255,45,120,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,45,120,0); }
+    }
+    .mic-btn svg {
+      width: 20px; height: 20px;
+      stroke: var(--dim);
+      fill: none; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round;
+      transition: stroke .15s;
+    }
+
+    .mic-info { display: flex; flex-direction: column; gap: 3px; }
+    .mic-lbl {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.15em;
+      color: var(--white);
+      line-height: 1;
+    }
+    .mic-sub {
+      font-size: 0.68rem;
+      color: var(--dim);
+      font-weight: 400;
+    }
+
+    /* brutalist clear button */
+    .ghost-btn {
+      padding: 8px 18px;
+      background: transparent;
+      border: 1px solid var(--border-b);
+      color: var(--dim);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.15em;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all .15s;
+      outline: none;
+    }
+    .ghost-btn:hover {
+      border-color: var(--pink);
+      color: var(--pink);
+      background: var(--pink-dim);
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- header -->
+  <header class="hdr">
+    <div class="logo">GENER<em>8</em>R</div>
+    <div class="hdr-r">
+      <div class="wave" id="wave">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="model-tag">LLAMA-3.3-70B</div>
+      <div id="hdr-clock">--:--:--</div>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <!-- sidebar -->
+    <aside class="sb">
+
+      <div class="sb-sec">
+        <div class="sb-lbl">Status</div>
+        <div class="st-block">
+          <div class="st-dot" id="st-dot"></div>
+          <span class="st-txt" id="st-txt">Idle</span>
+        </div>
+      </div>
+
+      <div class="sb-sec">
+        <div class="sb-lbl">System</div>
+        <div class="bat">
+          <div class="bat-row">
+            <span class="bat-lbl">Battery</span>
+            <span class="bat-val" id="bat-pct">--%</span>
+          </div>
+          <div class="bat-track">
+            <div class="bat-fill" id="bat-bar" style="width:0%"></div>
+          </div>
+          <div class="bat-row">
+            <span class="bat-lbl">Power</span>
+            <span class="bat-val" id="bat-plug" style="font-size:.6rem">--</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sb-sec">
+        <div class="sb-lbl">Commands</div>
+        <div class="cmd-list">
+          <div class="cmd">"What's the time"</div>
+          <div class="cmd">"Today's date"</div>
+          <div class="cmd">"Weather in Delhi"</div>
+          <div class="cmd">"News headlines"</div>
+          <div class="cmd">"Battery status"</div>
+          <div class="cmd">"Take a screenshot"</div>
+          <div class="cmd">"Open YouTube"</div>
+          <div class="cmd">"Open GitHub"</div>
+          <div class="cmd">"Open VS Code"</div>
+          <div class="cmd">"Reset chat"</div>
+          <div class="cmd">"GENER8R quit"</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- chat window -->
+    <div class="chat-wrap">
+      <div class="chat-log" id="chat-log">
+        <div class="welcome" id="welcome">
+          <div class="welcome-logo">GENER<em>8</em>R</div>
+          <div class="welcome-line"></div>
+          <div class="welcome-sub">Voice AI &middot; Built by Shubham Awasthi</div>
+          <div class="welcome-hint">Press the mic and speak a command</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- footer with mic -->
+  <footer class="ftr">
+    <div class="mic-area">
+      <button class="mic-btn" id="mic-btn" onclick="startListening()" aria-label="Start listening">
+        <svg viewBox="0 0 24 24">
+          <rect x="9" y="2" width="6" height="11" rx="3"/>
+          <path d="M5 10a7 7 0 0 0 14 0"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+      <div class="mic-info">
+        <div class="mic-lbl" id="mic-lbl">Click to Speak</div>
+        <div class="mic-sub">Powered by Groq · LLaMA 3.3</div>
+      </div>
+    </div>
+    <button class="ghost-btn" onclick="clearChat()">Clear</button>
+  </footer>
+
+</div>
+
+<script>
+  let isListening = false;
+  let historyLen = 0;
+
+  // live clock
+  function tick() {
+    const n = new Date();
+    const p = x => String(x).padStart(2, '0');
+    document.getElementById('hdr-clock').textContent =
+      p(n.getHours()) + ':' + p(n.getMinutes()) + ':' + p(n.getSeconds());
+  }
+  setInterval(tick, 1000); tick();
+
+  // battery using browser API
+  async function updateBattery() {
+    if (!('getBattery' in navigator)) return;
+    const b = await navigator.getBattery();
+    const pct = Math.round(b.level * 100);
+    document.getElementById('bat-pct').textContent = pct + '%';
+    const bar = document.getElementById('bat-bar');
+    bar.style.width = pct + '%';
+    bar.className = 'bat-fill' + (pct <= 15 ? ' low' : pct <= 30 ? ' warn' : '');
+    document.getElementById('bat-plug').textContent = b.charging ? 'Charging' : 'On battery';
+  }
+  updateBattery(); setInterval(updateBattery, 30000);
+
+  // updates everything based on backend state
+  function setStatus(state) {
+    const dot  = document.getElementById('st-dot');
+    const txt  = document.getElementById('st-txt');
+    const wave = document.getElementById('wave');
+    const btn  = document.getElementById('mic-btn');
+    const lbl  = document.getElementById('mic-lbl');
+
+    const labels = { idle:'Idle', listening:'Listening', thinking:'Thinking', speaking:'Speaking' };
+    dot.className = 'st-dot ' + state;
+    txt.className = 'st-txt ' + state;
+    txt.textContent = labels[state] || state;
+
+    wave.className = 'wave' + (state === 'speaking' ? ' on' : '');
+
+    if (state === 'listening') {
+      btn.classList.add('active'); lbl.textContent = 'Listening...';
+    } else if (state === 'thinking') {
+      btn.classList.remove('active'); lbl.textContent = 'Thinking...';
+    } else if (state === 'speaking') {
+      btn.classList.remove('active'); lbl.textContent = 'Speaking...';
+    } else {
+      btn.classList.remove('active'); lbl.textContent = 'Click to Speak';
+      isListening = false;
+    }
+  }
+
+  // polls backend every 700ms
+  async function pollStatus() {
+    try {
+      const d = await (await fetch('/status')).json();
+      setStatus(d.state);
+      await pollHistory();
+    } catch(e) {}
+  }
+
+  async function pollHistory() {
+    try {
+      const msgs = await (await fetch('/history')).json();
+      if (msgs.length !== historyLen) {
+        historyLen = msgs.length;
+        renderChat(msgs);
+      }
+    } catch(e) {}
+  }
+
+  function renderChat(msgs) {
+    const log = document.getElementById('chat-log');
+    const w = document.getElementById('welcome');
+    if (msgs.length > 0 && w) w.remove();
+    log.innerHTML = '';
+    msgs.forEach(m => {
+      const wrap = document.createElement('div');
+      wrap.className = 'msg ' + m.role;
+      const who = document.createElement('div');
+      who.className = 'msg-who';
+      who.textContent = m.role === 'user' ? 'You' : m.role === 'assistant' ? 'GENER8R' : 'System';
+      const bub = document.createElement('div');
+      bub.className = 'bubble';
+      bub.textContent = m.content;
+      wrap.append(who, bub);
+      log.appendChild(wrap);
+    });
+    log.scrollTop = log.scrollHeight;
+  }
+
+  async function startListening() {
+    if (isListening) return;
+    isListening = true;
+    try { await fetch('/listen', { method: 'POST' }); }
+    catch(e) { isListening = false; }
+  }
+
+  async function clearChat() {
+    historyLen = 0;
+    await fetch('/clear', { method: 'POST' }).catch(() => {});
+    const log = document.getElementById('chat-log');
+    log.innerHTML = `
+      <div class="welcome" id="welcome">
+        <div class="welcome-logo">GENER<em>8</em>R</div>
+        <div class="welcome-line"></div>
+        <div class="welcome-sub">Voice AI &middot; Built by Shubham Awasthi</div>
+        <div class="welcome-hint">Press the mic and speak a command</div>
+      </div>`;
+  }
+
+  setInterval(pollStatus, 700);
+</script>
+</body>
+</html>
