@@ -4,6 +4,35 @@ A voice-controlled AI assistant with a web dashboard, built with Python and Flas
 
 ---
 
+## Architecture
+
+```
+Your Voice
+    │
+    ▼
+Web Dashboard (HTML/CSS/JS)
+    │  click mic button
+    ▼
+Flask Backend (app.py)
+    │
+    ├──> Speech Recognition (Google Speech API)
+    │         │ transcribed text
+    │         ▼
+    ├──> Command Router
+    │         │
+    │         ├──> Groq API (LLaMA 3.3-70B)  ← general questions
+    │         ├──> WeatherAPI                 ← weather queries
+    │         ├──> NewsData.io                ← news headlines
+    │         └──> OS / Browser              ← open apps, sites
+    │
+    └──> TTS Worker Thread (pyttsx3)
+              │ spoken response
+              ▼
+           Speakers
+```
+
+---
+
 ## What it does
 
 - Answers questions using **LLaMA 3.3-70B** via the Groq API
