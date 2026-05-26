@@ -1,5 +1,0 @@
-# API KeysS
-
-GROQ_API_KEY    = "your_groq_api_key_here"
-WEATHER_API_KEY = "3ed9f1a19593417d93e122811262305"
-NEWS_API_KEY    = "pub_2048b6bef37140008c4a83eb8a01aa6b"
